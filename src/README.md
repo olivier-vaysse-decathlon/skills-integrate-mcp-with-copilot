@@ -1,50 +1,72 @@
 # Mergington High School Activities API
 
-A super simple FastAPI application that allows students to view and sign up for extracurricular activities.
+A FastAPI application for viewing extracurricular activities. Anyone can view
+activities and participants; teachers must log in to register or unregister students.
 
-## Features
+## Getting started
 
-- View all available extracurricular activities
-- Sign up for activities
+Run these commands from the repository root:
 
-## Getting Started
+1. Install dependencies:
 
-1. Install the dependencies:
-
-   ```
-   pip install fastapi uvicorn
+   ```sh
+   python -m pip install -r requirements.txt
    ```
 
-2. Run the application:
+2. Provision each teacher account:
 
+   ```sh
+   python -m src.manage_teachers TEACHER_USERNAME
    ```
-   python app.py
+
+   Enter and confirm a password when prompted. Passwords must contain at least
+   12 characters. Running the command again for the same username changes that
+   teacher's password.
+
+3. Start the application:
+
+   ```sh
+   uvicorn src.app:app --reload
    ```
 
-3. Open your browser and go to:
-   - API documentation: http://localhost:8000/docs
-   - Alternative documentation: http://localhost:8000/redoc
+4. Open http://localhost:8000. Use the account icon in the top-right corner to
+   log in as a teacher. API documentation is available at `/docs`.
 
-## API Endpoints
+Teacher usernames and Argon2 password hashes are stored in `src/teachers.json`,
+outside the static directory. The provisioning command creates the file with
+owner-only permissions; it is ignored by Git and must not be committed or shared.
+There are no default teacher accounts. If the file is missing or invalid, login
+is unavailable until an administrator fixes it.
 
-| Method | Endpoint                                                          | Description                                                         |
-| ------ | ----------------------------------------------------------------- | ------------------------------------------------------------------- |
-| GET    | `/activities`                                                     | Get all activities with their details and current participant count |
-| POST   | `/activities/{activity_name}/signup?email=student@mergington.edu` | Sign up for an activity                                             |
+Sessions expire after eight hours and are stored in memory in a single server
+process; they are not shared across workers. Restarting the server logs teachers
+out. Changing a password or removing its entry from the credential file
+invalidates that teacher's existing sessions on their next request. Activity
+registrations are also stored in memory and reset on restart.
 
-## Data Model
+For a deployed site, use HTTPS and set `TEACHER_COOKIE_SECURE=1` so the session
+cookie is sent only over HTTPS, including when TLS terminates at a reverse
+proxy. This exercise uses in-memory sessions and has no login rate limiting; it
+is not a production authentication deployment.
 
-The application uses a simple data model with meaningful identifiers:
+## API endpoints
 
-1. **Activities** - Uses activity name as identifier:
+| Method | Endpoint | Access |
+| ------ | -------- | ------ |
+| GET | `/activities` | Public, including participant emails |
+| POST | `/auth/login` | Public; accepts JSON `username` and `password` |
+| GET | `/auth/session` | Logged-in teacher |
+| POST | `/auth/logout` | Logged-in teacher and CSRF token |
+| POST | `/activities/{activity_name}/signup?email=student@mergington.edu` | Logged-in teacher and CSRF token |
+| DELETE | `/activities/{activity_name}/unregister?email=student@mergington.edu` | Logged-in teacher and CSRF token |
 
-   - Description
-   - Schedule
-   - Maximum number of participants allowed
-   - List of student emails who are signed up
+Login sets an HTTP-only session cookie and returns a `csrf_token`. Send that
+token in the `X-CSRF-Token` header for logout and registration changes. The
+session endpoint returns the token again after a page reload.
 
-2. **Students** - Uses email as identifier:
-   - Name
-   - Grade level
+## Tests
 
-All data is stored in memory, which means data will be reset when the server restarts.
+```sh
+python -m pip install -r requirements-dev.txt
+python -m unittest discover -s tests -v
+```
