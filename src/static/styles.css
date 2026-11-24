@@ -16,8 +16,9 @@ body {
 }
 
 header {
+  position: relative;
   text-align: center;
-  padding: 20px 0;
+  padding: 20px 55px;
   margin-bottom: 30px;
   background-color: #1a237e;
   color: white;
@@ -26,6 +27,59 @@ header {
 
 header h1 {
   margin-bottom: 10px;
+}
+
+.user-menu {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+.user-menu-toggle {
+  background: transparent;
+  font-size: 24px;
+  padding: 4px 8px;
+}
+
+.user-menu-popup {
+  position: absolute;
+  right: 0;
+  z-index: 1;
+  min-width: 180px;
+  padding: 10px;
+  background: white;
+  color: #333;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+.user-menu-popup span:not(.hidden) {
+  display: block;
+  margin-bottom: 8px;
+  overflow-wrap: anywhere;
+}
+
+dialog {
+  width: min(400px, calc(100% - 40px));
+  margin: auto;
+  padding: 20px;
+  border: 0;
+  border-radius: 5px;
+}
+
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+dialog h3 {
+  margin-bottom: 15px;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
 }
 
 main {
